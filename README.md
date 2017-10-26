@@ -66,11 +66,13 @@ echo arch.stijn > /etc/hostname
 vim /etc/hosts
 pacman -S networkmanager
 systemctl enable NetworkManager
-vim /etc/mkinitcpio.conf # Add the keyboard, encrypt and lvm2 hooks
+sed -i -e "s/ˆHOOKS=\".*\"/HOOKS=\"base udev autodetect modconf keyboard keymap block encrypt filesystems fsck lvm2\"/g" /etc/mkinitcpio.conf
 mkinitcpio -p linux
 pacman -S device-mapper grub linux lvm2
 grub-install --recheck /dev/sda
 grub-mkconfig -o /boot/grub/grub.cfg
+export sda1_uuid=`blkid | head -n1 | cut -f2 -d"\"" # Get the UUID of /dev/sda1
+sed -i "s/\/vmlinuz-linux root=/\/vmlinuz-linux cryptdevice=UUID=${sda1_uuid}:cryptolvm root=/g" /boot/grub/grub.cfg
 exit
 reboot
 ```
